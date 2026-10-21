@@ -19,7 +19,11 @@ php artisan serve
 
 php artisan test                                   # all tests (sqlite :memory:)
 php artisan test --filter=test_sell_through_cart   # single test
+npm test                                           # POS app unit tests (vitest)
+npm run build                                      # build the POS PWA (needed for /pos)
 ```
+
+**Never run `migrate:fresh`, `db:wipe` or seeders without `DB_DATABASE=<scratch file>` on the same command.** There's no `.env.testing`, so `--env=testing` hits the real local database. Also, `php artisan serve` doesn't pass `DB_DATABASE` to its workers. For a server on a scratch DB, run `php -S 127.0.0.1:PORT ../vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php` from `public/`.
 
 `.env` defaults to SQLite for local work, but production is **MySQL**. Some report queries use MySQL-only SQL (`DATE_FORMAT`), so the filtered-report checks in `tests/Feature/PosSmokeTest.php` are marked incomplete unless you run with `DB_CONNECTION=mysql`.
 
@@ -36,6 +40,7 @@ The redesign is underway as **ReemoPOS**, a multi-store SaaS. `docs/PLAN.md` hol
 - **Panels** (Filament 5): `/app` for customers (tenant = Organization, resources in `app/Filament/App`) and `/platform` for platform admins (`is_platform_admin`; `Gate::before` grants everything only inside this panel).
 - **POS API**: `routes/api.php`. A terminal pairs with a one-time code to get a Sanctum token (`tokenable` = Terminal), and the `terminal` middleware sets the tenant. Staff then sign in with a PIN (`pin-login`, rate limited).
 - **Catalog & stock (Phase 2)**: catalogs are per store. The models are `Product` (table `catalog_products`, because the legacy app owns `products`), `ProductVariant`, `ProductUnit`, `Barcode` and `VariantPrice`. Stock is per branch, in base units. **Only `App\Support\Inventory\StockService` changes stock or cost.** It locks `stock_levels`, appends to `stock_movements` (append-only), keeps the moving-average cost and allocates lots FEFO. Use `PriceResolver` for prices and `BarcodeResolver` for barcodes, including scale labels. `DocumentNumber` issues PO/TR/SC numbers. Child models use the `InheritsTenant` trait to copy `organization_id`/`store_id` from their parent.
+- **Selling (Phase 3)**: the till is a Vue 3 PWA at `/pos` (`resources/pos/`, IndexedDB via Dexie, service worker `public/pos-sw.js`). It queues every action offline and pushes to `POST /api/v1/terminal/sync`, which `App\Support\Sales\PosSync` applies in order and idempotently. Ids are device-made ULIDs, and receipt numbers are issued per terminal. `sales` (not `orders`, which the legacy app owns), `sale_items`, `sale_payments`, `shifts` and `cash_movements` are immutable once written: corrections are voids (same shift) or credit notes. **`SaleCalculator.php` and `resources/pos/lib/calc.ts` must stay identical**, and both are tested against `tests/fixtures/sale-calc.json`. JS tests: `npm test` (vitest). Build the till: `npm run build`.
 - **Legacy app**: the old models are in `App\Models\Legacy\*`, and the old routes below are behind the `legacy` middleware. Only users with `can_access_legacy` (every pre-redesign user) get in, and legacy sign-up is closed.
 - **Tests**: `tests/Feature/Core/*`. The `Tests\Concerns\BuildsTenants` trait builds orgs, stores and members, and `actingInPanel()` is for Livewire tests.
 

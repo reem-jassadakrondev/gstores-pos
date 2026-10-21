@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\SaleType;
 use App\Http\Controllers\Controller;
 use App\Models\OrganizationMember;
+use App\Models\Sale;
+use App\Models\Shift;
 use App\Models\Terminal;
 use App\Support\Access\AccessManager;
 use App\Support\Audit\AuditLogger;
+use App\Support\Sales\PosSettings;
 use App\Support\Tenancy\CurrentTenant;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -46,7 +50,10 @@ class TerminalController extends Controller
         return response()->json($this->describe($request->user()));
     }
 
-    /** Staff who may work at this branch, for the PIN screen. Only id and name leave the server. */
+    /**
+     * Staff who may work at this branch, for the PIN screen, with what the device needs to
+     * check PINs and permissions while offline (a PBKDF2 verifier, never the PIN itself).
+     */
     public function staff(Request $request, AccessManager $access): JsonResponse
     {
         /** @var Terminal $terminal */
@@ -57,7 +64,17 @@ class TerminalController extends Controller
             ->whereNotNull('pin_hash')
             ->get()
             ->filter(fn (OrganizationMember $m) => $access->permissionsAt($m->user, $terminal->branch) !== [])
-            ->map(fn (OrganizationMember $m) => ['id' => $m->user_id, 'name' => $m->user->name])
+            ->map(fn (OrganizationMember $m) => [
+                'id' => $m->user_id,
+                'name' => $m->user->name,
+                'org_role' => $m->org_role->value,
+                'permissions' => $access->permissionsAt($m->user, $terminal->branch),
+                'pin' => $m->pin_offline_hash ? [
+                    'salt' => $m->pin_offline_salt,
+                    'hash' => $m->pin_offline_hash,
+                    'iterations' => OrganizationMember::OFFLINE_PIN_ITERATIONS,
+                ] : null,
+            ])
             ->values();
 
         return response()->json(['data' => $staff]);
@@ -101,6 +118,13 @@ class TerminalController extends Controller
         ]);
     }
 
+    private function nextNumber(Terminal $terminal, SaleType $type): int
+    {
+        $last = Sale::where('terminal_id', $terminal->getKey())->where('type', $type)->max('number');
+
+        return $last ? (int) substr($last, -6) + 1 : 1;
+    }
+
     private function describe(Terminal $terminal): array
     {
         $terminal->loadMissing(['branch', 'store.legalEntity', 'organization']);
@@ -129,8 +153,18 @@ class TerminalController extends Controller
             'legal_entity' => [
                 'name' => $terminal->store->legalEntity->name,
                 'tax_id' => $terminal->store->legalEntity->tax_id,
+                'address' => $terminal->store->legalEntity->address,
                 'vat_registered' => $terminal->store->legalEntity->vat_registered,
                 'vat_rate' => $terminal->store->legalEntity->vat_rate,
+            ],
+            'pos_settings' => PosSettings::for($terminal->store),
+            // Where the device's running numbers continue (it may have been reinstalled).
+            'sequences' => [
+                'sale' => $this->nextNumber($terminal, SaleType::Sale),
+                'credit_note' => $this->nextNumber($terminal, SaleType::CreditNote),
+                'z' => (int) Shift::where('terminal_id', $terminal->getKey())->max('z_number') + 1,
+                'open_shift' => Shift::where('terminal_id', $terminal->getKey())->whereNull('closed_at')->latest('opened_at')
+                    ->first(['id', 'opened_at', 'opened_by', 'opening_cash']),
             ],
             'organization' => [
                 'id' => $terminal->organization->getKey(),

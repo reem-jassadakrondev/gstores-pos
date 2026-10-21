@@ -1,57 +1,60 @@
 <?php
 
 namespace App\Http\Controllers;
-//© 2020 Copyright: Tahu Coding
-use Illuminate\Support\Facades\File;
-use App\Models\Legacy\Product;
-use App\Models\Legacy\HistoryProduct;
-use Illuminate\Http\Request;
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\URL;
+// © 2020 Copyright: Tahu Coding
+use App\Models\Legacy\HistoryProduct;
+use App\Models\Legacy\Product;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 
 class ProductController extends Controller
 {
-    public function index(){
+    public function index()
+    {
 
-        $products = Product::when(request('search'), function($query){
-                        return $query->where('name','like','%'.request('search').'%');
-                    })
-                    ->orderBy('created_at','desc')
-                    ->paginate(16);
+        $products = Product::when(request('search'), function ($query) {
+            return $query->where('name', 'like', '%'.request('search').'%');
+        })
+            ->orderBy('created_at', 'desc')
+            ->paginate(16);
+
         return view('product.index', compact('products'));
     }
 
-    public function create(){
+    public function create()
+    {
         return view('product.create');
     }
 
-    public function store(Request $request){
+    public function store(Request $request)
+    {
 
         DB::beginTransaction();
 
-        try{
+        try {
             $id = $request->id;
 
-            if($id){
+            if ($id) {
                 $request->validate([
                     'name' => 'required|min:2|max:200',
                     'price' => 'required',
                     // 'description' => 'required',
                 ]);
 
-                if($request->addQty){
+                if ($request->addQty) {
                     $qty = $request->qty + $request->addQty;
-                    if($qty < 0){
-                        return redirect()->back()->with('errorQty','จำนวนรวมของสต๊อกจะต้องไม่ใช่ศูนย์');
+                    if ($qty < 0) {
+                        return redirect()->back()->with('errorQty', 'จำนวนรวมของสต๊อกจะต้องไม่ใช่ศูนย์');
                     }
-                }else{
+                } else {
                     $qty = $request->qty;
                 }
 
                 $product_id = Product::find($id);
-                if($request->has('image')){
+                if ($request->has('image')) {
                     // $gambar = $request->image;
                     // $new_gambar = time().$gambar->getClientOriginalName();
                     // Image::make($gambar->getRealPath())->resize(null, 200, function ($constraint) {
@@ -70,9 +73,9 @@ class ProductController extends Controller
                         'brand' => $request->brand,
                         'productsize' => $request->productsize,
                         'costprice' => $request->costprice,
-                        'unit' => $request->unit
+                        'unit' => $request->unit,
                     ];
-                }else{
+                } else {
                     $product = [
                         'name' => $request->name,
                         'price' => $request->price,
@@ -82,11 +85,11 @@ class ProductController extends Controller
                         'brand' => $request->brand,
                         'productsize' => $request->productsize,
                         'costprice' => $request->costprice,
-                        'unit' => $request->unit
+                        'unit' => $request->unit,
                     ];
                 }
                 $product_id->update($product);
-                if($request->addQty){
+                if ($request->addQty) {
                     HistoryProduct::create([
                         'product_id' => $product_id->id,
                         'user_id' => Auth::id(),
@@ -94,15 +97,16 @@ class ProductController extends Controller
                         'qtyChange' => $request->addQty,
                         // 'tipe' => $request->input('type'),
                         'tipe' => 'ปรับสต๊อก',
-                        'costprice' => $request->costprice
+                        'costprice' => $request->costprice,
                     ]);
                 }
 
                 $message = 'บันทึกสำเสร็จ';
 
                 DB::commit();
-                return redirect()->back()->with('success',$message);
-            }else{
+
+                return redirect()->back()->with('success', $message);
+            } else {
                 $request->validate([
                     'name' => 'required|min:2|max:200',
                     'price' => 'required',
@@ -115,17 +119,17 @@ class ProductController extends Controller
                 // $new_gambar = time().$gambar->getClientOriginalName();
 
                 $product = Product::create([
-                        'name' => $request->name,
-                        'price' => $request->price,
-                        'qty' => $request->qty,
-                        // 'image' => 'uploads/images/'.$new_gambar,
-                        'description' => $request->description,
-                        'user_id' => Auth::id(),
-                        'weight' => $request->weight,
-                        'brand' => $request->brand,
-                        'productsize' => $request->productsize,
-                        'costprice' => $request->costprice,
-                        'unit' => $request->unit
+                    'name' => $request->name,
+                    'price' => $request->price,
+                    'qty' => $request->qty,
+                    // 'image' => 'uploads/images/'.$new_gambar,
+                    'description' => $request->description,
+                    'user_id' => Auth::id(),
+                    'weight' => $request->weight,
+                    'brand' => $request->brand,
+                    'productsize' => $request->productsize,
+                    'costprice' => $request->costprice,
+                    'unit' => $request->unit,
                 ]);
 
                 // Image::make($gambar->getRealPath())->resize(null, 200, function ($constraint) {
@@ -138,49 +142,53 @@ class ProductController extends Controller
                     'qty' => $request->qty,
                     'qtyChange' => 0,
                     'tipe' => 'เพิ่มสินค้า',
-                    'costprice' => $request->costprice
+                    'costprice' => $request->costprice,
                 ]);
 
                 $message = 'บันทึกสำเสร็จ';
 
                 DB::commit();
-                return redirect()->route('products.index')->with('success',$message);
+
+                return redirect()->route('products.index')->with('success', $message);
             }
-        }
-        catch (\Throwable $e){
+        } catch (\Throwable $e) {
             DB::rollback();
-            return redirect()->route('products.create')->with('error',$e->getMessage());
+
+            return redirect()->route('products.create')->with('error', $e->getMessage());
         }
     }
 
-    public function edit($id,Request $request){
+    public function edit($id, Request $request)
+    {
 
         $product = Product::find($id);
         // Product::where('id',$id)->update([
         //     'name' => $request->input('name')
         // ]);
-        $history = HistoryProduct::where('product_id',$id)->orderBy('updated_at','desc')->get();
-        return view('product.edit',compact('product','history'));
+        $history = HistoryProduct::where('product_id', $id)->orderBy('updated_at', 'desc')->get();
+
+        return view('product.edit', compact('product', 'history'));
     }
 
-    public function destroy(Request $request,$id){
+    public function destroy(Request $request, $id)
+    {
         DB::beginTransaction();
 
-        try{
-        $product = Product::find($id);
-        // $product->delete();
-        // File::delete(public_path($product->image));
+        try {
+            $product = Product::find($id);
+            // $product->delete();
+            // File::delete(public_path($product->image));
 
-        DB::commit();
-        return redirect()->route('products.index')->with('success','บันทึกสำเสร็จ');
-        }
-        catch (\Throwable $e){
+            DB::commit();
+
+            return redirect()->route('products.index')->with('success', 'บันทึกสำเสร็จ');
+        } catch (\Throwable $e) {
             DB::rollback();
-            return redirect()->route('products.index')->with('error',$e->getMessage());
-        }
 
+            return redirect()->route('products.index')->with('error', $e->getMessage());
+        }
 
     }
 
-    //© 2020 Copyright: Tahu Coding
+    // © 2020 Copyright: Tahu Coding
 }

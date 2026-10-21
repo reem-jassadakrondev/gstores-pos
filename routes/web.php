@@ -10,16 +10,29 @@ use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/app');
 
+// POS till (PWA). The page itself is public; the device authenticates to the API with its own token.
+Route::view('/pos', 'pos')->name('pos');
+Route::get('/pos/precache.json', function () {
+    $manifest = public_path('build/manifest.json');
+    $files = is_file($manifest) ? collect(json_decode(file_get_contents($manifest), true))
+        ->filter(fn ($entry, $src) => str_starts_with($src, 'resources/pos/'))
+        ->flatMap(fn ($entry) => [$entry['file'], ...($entry['css'] ?? []), ...($entry['imports'] ?? [])])
+        ->map(fn ($file) => str_starts_with($file, '_') ? null : '/build/'.$file)
+        ->filter()->unique()->values() : collect();
+
+    return response()->json($files)->header('Cache-Control', 'no-store');
+});
+
 // Legacy (pre-SaaS) app: sign-up is closed, and only users flagged can_access_legacy get in.
 Auth::routes(['register' => false]);
 
 Route::middleware(['auth', 'legacy'])->group(function () {
     Route::get('/home', [TransactionController::class, 'index'])->name('home');
 
-    //สินค้า
+    // สินค้า
     Route::resource('/products', ProductController::class);
 
-    //ตะกล้าสินค้า
+    // ตะกล้าสินค้า
     Route::get('/transcation', [TransactionController::class, 'index']);
     Route::post('/transcation/addproduct/{id}', [TransactionController::class, 'addProductCart']);
     Route::post('/addPriceCart/{id}', [TransactionController::class, 'addPriceCart']);
@@ -36,21 +49,21 @@ Route::middleware(['auth', 'legacy'])->group(function () {
     Route::get('/transcation/laporan/{id}', [TransactionController::class, 'laporan']);
     Route::get('/getTransport/{line}', [TransactionController::class, 'getTransport']);
 
-    //ลูกค้า
+    // ลูกค้า
     Route::get('/customeradd', [CustomerController::class, 'customeradd'])->name('customeradd');
     Route::post('/ct_insert', [CustomerController::class, 'ct_insert'])->name('ct_insert');
     Route::get('/updatecust/{id}', [CustomerController::class, 'updatecust'])->name('updatecust');
     Route::put('ct_updatecustomer', [CustomerController::class, 'ct_updatecustomer'])->name('ct_updatecustomer');
     Route::delete('/ct_destroy/{id}', [CustomerController::class, 'ct_destroy'])->name('ct_destroy');
 
-    //สายรถ
+    // สายรถ
     Route::get('/tran_index', [TransportController::class, 'tran_index'])->name('tran_index');
     Route::post('/tran_insert', [TransportController::class, 'tran_insert'])->name('tran_insert');
     Route::get('/tran_showupdate/{tran_id}', [TransportController::class, 'tran_showupdate'])->name('tran_showupdate');
     Route::put('tran_updatetran', [TransportController::class, 'tran_updatetran'])->name('tran_updatetran');
     Route::delete('/tran_destroy/{tran_id}', [TransportController::class, 'tran_destroy'])->name('tran_destroy');
 
-    //รายงาน
+    // รายงาน
     Route::get('/reporttransport', [HomeController::class, 'reporttransport'])->name('reporttransport');
     Route::get('/reportstock', [HomeController::class, 'reportstock'])->name('reportstock');
     Route::get('/reporthistoryproduct', [HomeController::class, 'reporthistoryproduct'])->name('reporthistoryproduct');
@@ -61,13 +74,13 @@ Route::middleware(['auth', 'legacy'])->group(function () {
     Route::get('/reportcostprofit', [HomeController::class, 'reportcostprofit'])->name('reportcostprofit');
     Route::post('/reportcostprofitid', [HomeController::class, 'reportcostprofitid'])->name('reportcostprofitid');
 
-    //สั่งซื้อสินค้า
+    // สั่งซื้อสินค้า
     Route::get('/order', [HomeController::class, 'order'])->name('order');
     Route::get('/orderhitory', [HomeController::class, 'orderhitory'])->name('orderhitory');
     Route::post('/saveorder', [HomeController::class, 'saveorder'])->name('saveorder');
     Route::get('/review/{id}', [HomeController::class, 'showReview'])->name('showReview');
 
-    //ยอดค้างชำระ
+    // ยอดค้างชำระ
     Route::get('/overdue/{invoice}', [HomeController::class, 'overdue'])->name('overdue');
     Route::post('/Saveoverdue', [HomeController::class, 'Saveoverdue'])->name('Saveoverdue');
     Route::get('/reportoverdue', [HomeController::class, 'reportoverdue'])->name('reportoverdue');

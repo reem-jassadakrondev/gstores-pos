@@ -8,9 +8,7 @@ namespace App\Services\Cart;
  */
 class CartCondition
 {
-    public function __construct(protected array $args)
-    {
-    }
+    public function __construct(protected array $args) {}
 
     public function getName(): string
     {

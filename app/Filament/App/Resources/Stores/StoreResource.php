@@ -7,14 +7,17 @@ use App\Filament\App\Resources\Stores\Pages\ManageStores;
 use App\Filament\Support\TenantAccess;
 use App\Models\LegalEntity;
 use App\Models\Store;
+use App\Support\Sales\PosSettings;
 use BackedEnum;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
@@ -74,6 +77,20 @@ class StoreResource extends Resource
                 ->afterStateUpdated(fn ($state, $set) => $state && $set('modules', BusinessType::from($state)->defaultModules())),
             CheckboxList::make('modules')->label('โมดูลที่เปิดใช้')->options(self::MODULES)->columns(3)->columnSpanFull(),
             Toggle::make('is_active')->label('เปิดใช้งาน')->default(true),
+            Section::make('ตั้งค่าหน้าขาย (POS)')->columns(2)->columnSpanFull()->collapsible()->schema([
+                TextInput::make('settings.promptpay_id')->label('พร้อมเพย์ (เบอร์โทร / เลขผู้เสียภาษี)')->maxLength(20)
+                    ->helperText('ใช้สร้าง QR รับเงินบนเครื่อง POS · เงินเข้าบัญชีของร้านนี้'),
+                Toggle::make('settings.prices_include_vat')->label('ราคาสินค้ารวม VAT แล้ว')->default(PosSettings::DEFAULTS['prices_include_vat'])->inline(false),
+                Select::make('settings.rounding_step')->label('ปัดเศษยอดรวม')->native(false)
+                    ->options(['0.01' => 'ไม่ปัด (ถึงสตางค์)', '0.25' => '25 สตางค์', '0.5' => '50 สตางค์', '1' => '1 บาท'])->default('0.01'),
+                TextInput::make('settings.max_discount_percent')->label('ส่วนลดสูงสุดโดยไม่ต้องใช้ PIN ผู้จัดการ (%)')
+                    ->numeric()->minValue(0)->maxValue(100)->default(PosSettings::DEFAULTS['max_discount_percent']),
+                Select::make('settings.paper_width')->label('ขนาดกระดาษใบเสร็จ')->native(false)->options(['58' => '58 มม.', '80' => '80 มม.'])->default('80'),
+                Select::make('settings.scale_barcode_mode')->label('บาร์โค้ดเครื่องชั่ง')->native(false)
+                    ->options(['weight' => 'ฝังน้ำหนัก', 'price' => 'ฝังราคา'])->default('weight'),
+                Textarea::make('settings.receipt_header')->label('ข้อความหัวใบเสร็จ')->rows(2),
+                Textarea::make('settings.receipt_footer')->label('ข้อความท้ายใบเสร็จ')->rows(2)->default(PosSettings::DEFAULTS['receipt_footer']),
+            ]),
         ])->columns(2);
     }
 

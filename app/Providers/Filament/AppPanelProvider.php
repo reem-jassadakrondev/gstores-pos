@@ -45,7 +45,7 @@ class AppPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Violet,
             ])
-            ->navigationGroups(['สินค้า', 'สต็อก', 'จัดซื้อ', 'ร้านค้า', 'ทีมงาน', 'ระบบ'])
+            ->navigationGroups(['การขาย', 'สินค้า', 'สต็อก', 'จัดซื้อ', 'ร้านค้า', 'ทีมงาน', 'ระบบ'])
             ->discoverResources(in: app_path('Filament/App/Resources'), for: 'App\Filament\App\Resources')
             ->discoverPages(in: app_path('Filament/App/Pages'), for: 'App\Filament\App\Pages')
             ->pages([

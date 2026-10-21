@@ -1,24 +1,22 @@
 <?php
 
 namespace App\Http\Controllers;
-//© 2020 Copyright: Tahu Coding
 
-use Illuminate\Support\Facades\Auth;
-use App\Models\Legacy\Product;
-use App\Models\Legacy\Customer;
-use App\Models\Legacy\Transport;
-use App\Models\Legacy\Transcation;
-use App\Models\Legacy\HistoryProduct;
-use App\Models\Legacy\Overdue;
-//sorry kalau ada typo dalam penamaan dalam bahasa inggris
-use App\Models\Legacy\ProductTranscation;
+// © 2020 Copyright: Tahu Coding
+
 use App\Facades\Cart;
+use App\Models\Legacy\Customer;
+use App\Models\Legacy\HistoryProduct;
+use App\Models\Legacy\Product;
+use App\Models\Legacy\ProductTranscation;
+use App\Models\Legacy\Transcation;
+// sorry kalau ada typo dalam penamaan dalam bahasa inggris
+use App\Models\Legacy\Transport;
 use App\Services\Cart\CartCondition;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-
-//import dulu packagenya biar bs dipake
+// import dulu packagenya biar bs dipake
 use Illuminate\Support\Facades\Response;
 
 class TransactionController extends Controller
@@ -27,29 +25,29 @@ class TransactionController extends Controller
     {
         $customer = Customer::all();
         $transport = Transport::all();
-        //product
+        // product
         $products = Product::when(request('search'), function ($query) {
-            return $query->where('name', 'like', '%' . request('search') . '%');
+            return $query->where('name', 'like', '%'.request('search').'%');
         })
             ->orderBy('created_at', 'desc')
             ->paginate(24);
 
         // $customer =
 
-        //cart TAX
+        // cart TAX
         if (request()->tax) {
-            $tax = "+7%";
+            $tax = '+7%';
         } else {
-            $tax = "0%";
+            $tax = '0%';
         }
 
-        $condition = new CartCondition(array(
+        $condition = new CartCondition([
             'name' => 'pajak',
-            'type' => 'tax', //tipenya apa
-            'target' => 'total', //target kondisi ini apply ke mana (total, subtotal)
-            'value' => $tax, //contoh -12% or -10 or +10 etc
-            'order' => 1
-        ));
+            'type' => 'tax', // tipenya apa
+            'target' => 'total', // target kondisi ini apply ke mana (total, subtotal)
+            'value' => $tax, // contoh -12% or -10 or +10 etc
+            'order' => 1,
+        ]);
 
         Cart::session(Auth()->id())->condition($condition);
 
@@ -74,7 +72,7 @@ class TransactionController extends Controller
             $cart_data = collect($cart)->sortBy('created_at');
         }
 
-        //total
+        // total
         $sub_total = Cart::session(Auth()->id())->getSubTotal();
         $total = Cart::session(Auth()->id())->getTotal();
 
@@ -84,16 +82,16 @@ class TransactionController extends Controller
         $data_total = [
             'sub_total' => $sub_total,
             'total' => $total,
-            'tax' => $pajak
+            'tax' => $pajak,
         ];
 
-        //kembangin biar no reload make ajax
-        //saran bagi yg mau kembangin bisa pake jquery atau .js native untuk manggil ajax jangan lupa product, cart item dan total dipisah
-        //btw saya lg mager bikin beginian.. jadi sayas serahkan sama kalian ya (yang penting konsep dan fungsi aplikasi dah kelar 100%)
+        // kembangin biar no reload make ajax
+        // saran bagi yg mau kembangin bisa pake jquery atau .js native untuk manggil ajax jangan lupa product, cart item dan total dipisah
+        // btw saya lg mager bikin beginian.. jadi sayas serahkan sama kalian ya (yang penting konsep dan fungsi aplikasi dah kelar 100%)
 
-        //kembangin jadi SPA make react.js atau vue.js (tapi bagusnya backend sama frontend dipisah | backend cuma sebagai penyedia token sama restfull api aja)
-        //kalau make SPA kayaknya agak sulit deh krn ini package default nyimpan cartnya disession, tapi kalau gak salah didokumentasinya
-        //bilang kalau ini package bisa store datanya di database
+        // kembangin jadi SPA make react.js atau vue.js (tapi bagusnya backend sama frontend dipisah | backend cuma sebagai penyedia token sama restfull api aja)
+        // kalau make SPA kayaknya agak sulit deh krn ini package default nyimpan cartnya disession, tapi kalau gak salah didokumentasinya
+        // bilang kalau ini package bisa store datanya di database
         return view('pos.index', compact('products', 'cart_data', 'data_total', 'customer', 'transport'));
     }
 
@@ -108,12 +106,12 @@ class TransactionController extends Controller
             if ($product->qty == $cek_itemId[$id]->quantity) {
                 return redirect()->back()->with('error', 'จำนวนรายการน้อยลง');
             } else {
-                Cart::session(Auth()->id())->update($id, array(
-                    'quantity' => 1
-                ));
+                Cart::session(Auth()->id())->update($id, [
+                    'quantity' => 1,
+                ]);
             }
         } else {
-            Cart::session(Auth()->id())->add(array(
+            Cart::session(Auth()->id())->add([
                 'id' => $id,
                 'name' => $product->name,
                 'unit' => $product->unit,
@@ -121,10 +119,10 @@ class TransactionController extends Controller
                 'price' => $product->price,
                 'costprice' => $product->costprice,
                 'quantity' => 1,
-                'attributes' => array(
-                    'created_at' => date('Y-m-d H:i:s')
-                )
-            ));
+                'attributes' => [
+                    'created_at' => date('Y-m-d H:i:s'),
+                ],
+            ]);
         }
 
         return redirect()->back();
@@ -137,31 +135,31 @@ class TransactionController extends Controller
 
         if ($price < $costprice) {
             return redirect()->back()->with('errorTransaksi', 'จำนวนเงินที่ขายจะต้องมากกว่าราคาทุน');
-        }else{
-        
-        // Add the price to the cart for the specified product ID
-        Cart::session(Auth()->id())->update($id, array(
-            'price' => $price,
-        ));
-}
+        } else {
+
+            // Add the price to the cart for the specified product ID
+            Cart::session(Auth()->id())->update($id, [
+                'price' => $price,
+            ]);
+        }
+
         // Redirect or perform any other actions as needed
         return redirect()->back();
     }
-
 
     public function addCustomerCart(Request $request)
     {
 
         Cart::session(Auth()->id())->add(
-            array(
+            [
                 // 'id' => $id,
                 // 'name' => $product->name,
                 // 'price' => $product->price,
                 // 'quantity' => 1,
                 // 'attributes' => array(
                 // 'created_at' => date('Y-m-d H:i:s')
-                'customer' => $request->customer
-            )
+                'customer' => $request->customer,
+            ]
         );
 
         return redirect()->back();
@@ -179,7 +177,7 @@ class TransactionController extends Controller
 
         $cart_total = Cart::session(Auth()->id())->getTotal();
         $bayar = request()->bayar;
-        $kembalian = (int)$bayar - (int)$cart_total;
+        $kembalian = (int) $bayar - (int) $cart_total;
 
         if ($kembalian >= 0) {
             DB::beginTransaction();
@@ -188,12 +186,11 @@ class TransactionController extends Controller
 
                 $all_cart = Cart::session(Auth()->id())->getContent();
 
-
                 $filterCart = $all_cart->map(function ($item) {
                     return [
                         'id' => $item->id,
                         'price' => $item->price,
-                        'quantity' => $item->quantity
+                        'quantity' => $item->quantity,
                     ];
                 });
 
@@ -213,7 +210,7 @@ class TransactionController extends Controller
                         'qtyChange' => -$cart['quantity'],
                         'tipe' => 'ขายสินค้า',
                         'customer_id' => $request->input('customer'),
-                        'created_at' => $request->input('datehave')
+                        'created_at' => $request->input('datehave'),
                     ]);
 
                     $product->decrement('qty', $cart['quantity']);
@@ -222,19 +219,19 @@ class TransactionController extends Controller
                 // $id = IdGenerator::generate(['table' => 'transcations', 'length' => 10, 'prefix' => 'INV-'. $request->input('line').'', 'field' => 'invoices_number']);
 
                 // Get the input 'line' from the $request object (assuming it's a POST request).
-        $line = $request->input('line');
+                $line = $request->input('line');
 
-        // Get the last transaction to check the last used number for the given 'line'.
-        $lastTransaction = Transcation::where('invoices_number', 'LIKE', 'INV-'.$line . '%')
-            ->latest('invoices_number')
-            ->first();
+                // Get the last transaction to check the last used number for the given 'line'.
+                $lastTransaction = Transcation::where('invoices_number', 'LIKE', 'INV-'.$line.'%')
+                    ->latest('invoices_number')
+                    ->first();
 
-        // Extract the numeric part from the last invoices_number and increment it by one.
-        $lastId = $lastTransaction ? (int)substr($lastTransaction->invoices_number, 6) : 0;
-        $nextId = $lastId + 1;
+                // Extract the numeric part from the last invoices_number and increment it by one.
+                $lastId = $lastTransaction ? (int) substr($lastTransaction->invoices_number, 6) : 0;
+                $nextId = $lastId + 1;
 
-        // Format the next ID with the prefix from 'line' and zero-padding for the continuous number.
-        $id = 'INV-'. $line . str_pad($nextId, 6, '0', STR_PAD_LEFT);
+                // Format the next ID with the prefix from 'line' and zero-padding for the continuous number.
+                $id = 'INV-'.$line.str_pad($nextId, 6, '0', STR_PAD_LEFT);
 
                 Transcation::create([
                     'invoices_number' => $id,
@@ -242,7 +239,7 @@ class TransactionController extends Controller
                     'pay' => request()->bayar,
                     'total' => $cart_total,
                     'discount' => $request->input('discount'),
-                    'created_at' => $request->input('datehave')
+                    'created_at' => $request->input('datehave'),
                 ]);
 
                 foreach ($filterCart as $cart) {
@@ -253,25 +250,29 @@ class TransactionController extends Controller
                         'invoices_number' => $id,
                         'qty' => $cart['quantity'],
                         'pd_customer_id' => $request->input('customer'),
-                        'created_at' => $request->input('datehave')
+                        'created_at' => $request->input('datehave'),
                     ]);
                 }
 
                 Cart::session(Auth()->id())->clear();
 
                 DB::commit();
+
                 return redirect()->back()->with('success', 'บันทึกสำเสร็จ');
             } catch (\Throwable $e) {
                 DB::rollback();
+
                 return redirect()->back()->with('errorTransaksi', 'จำนวนเงินที่ชำระไม่ถูกต้อง');
             }
         }
+
         return redirect()->back()->with('errorTransaksi', 'จำนวนเงินที่ชำระไม่ถูกต้อง');
     }
 
     public function clear()
     {
         Cart::session(Auth()->id())->clear();
+
         return redirect()->back();
     }
 
@@ -285,16 +286,16 @@ class TransactionController extends Controller
         if ($cek_itemId[$id]->quantity == 1) {
             Cart::session(Auth()->id())->remove($id);
         } else {
-            Cart::session(Auth()->id())->update($id, array(
-                'quantity' => array(
+            Cart::session(Auth()->id())->update($id, [
+                'quantity' => [
                     'relative' => true,
-                    'value' => -1
-                )
-            ));
+                    'value' => -1,
+                ],
+            ]);
         }
+
         return redirect()->back();
     }
-
 
     public function increasecart($id)
     {
@@ -306,12 +307,12 @@ class TransactionController extends Controller
         if ($product->qty == $cek_itemId[$id]->quantity) {
             return redirect()->back()->with('error', '');
         } else {
-            Cart::session(Auth()->id())->update($id, array(
-                'quantity' => array(
+            Cart::session(Auth()->id())->update($id, [
+                'quantity' => [
                     'relative' => true,
-                    'value' => 1
-                )
-            ));
+                    'value' => 1,
+                ],
+            ]);
 
             return redirect()->back();
         }
@@ -327,36 +328,35 @@ class TransactionController extends Controller
         // ->paginate(10);
 
         $history = Transcation::orderBy('transcations.invoices_number', 'desc')
-    ->leftJoin('overdues', 'transcations.invoices_number', '=', 'overdues.overdue_invoice_number')
-    ->leftJoin('product_transation', 'product_transation.invoices_number', '=', 'transcations.invoices_number')
-    ->leftJoin('customers', 'customers.id', '=', 'product_transation.pd_customer_id')
-    ->groupBy('transcations.invoices_number', 'cus_name', 'product_transation.pd_customer_id', 'total', 'transcations.created_at')
-    ->select(
-        'transcations.invoices_number',
-        'cus_name',
-        'product_transation.pd_customer_id',
-        'total',
-        'transcations.created_at AS transaction_date'
-    )
-    ->get();
+            ->leftJoin('overdues', 'transcations.invoices_number', '=', 'overdues.overdue_invoice_number')
+            ->leftJoin('product_transation', 'product_transation.invoices_number', '=', 'transcations.invoices_number')
+            ->leftJoin('customers', 'customers.id', '=', 'product_transation.pd_customer_id')
+            ->groupBy('transcations.invoices_number', 'cus_name', 'product_transation.pd_customer_id', 'total', 'transcations.created_at')
+            ->select(
+                'transcations.invoices_number',
+                'cus_name',
+                'product_transation.pd_customer_id',
+                'total',
+                'transcations.created_at AS transaction_date'
+            )
+            ->get();
 
         return view('pos.history', compact('history'));
     }
-
 
     public function laporan($id)
     {
         $sqltrans = "SELECT transcations.invoices_number,product_transation.pd_customer_id,customers.cus_name,customers.cus_address,customers.cus_tel,customers.cus_contact,product_transation.created_at FROM `transcations`
         LEFT JOIN product_transation on product_transation.invoices_number = transcations.invoices_number
         LEFT JOIN customers on customers.id = pd_customer_id
-        where transcations.invoices_number = '" . $id . "'
+        where transcations.invoices_number = '".$id."'
         GROUP BY transcations.invoices_number,product_transation.pd_customer_id,customers.cus_name,customers.cus_address,customers.cus_tel,customers.cus_contact,product_transation.created_at;";
         $transaksihead = DB::select($sqltrans);
 
         $sqlin = "SELECT *,product_transation.qty as hqty,products.qty as pqty FROM `product_transation`
         JOIN transcations on transcations.invoices_number = product_transation.invoices_number
         LEFT JOIN products on products.id = product_transation.product_id
-        WHERE product_transation.invoices_number = '" . $id . "' ";
+        WHERE product_transation.invoices_number = '".$id."' ";
         $transaksi = DB::select($sqlin);
 
         $sql = "SELECT transcations.invoices_number,pay,total,overdues.overdue_amount,product_transation.pd_customer_id,customers.id as cid FROM `transcations`
@@ -445,12 +445,12 @@ class TransactionController extends Controller
                 $product->qty += $item->qty;
                 $product->save();
 
-                $historyProduct = new HistoryProduct();
+                $historyProduct = new HistoryProduct;
                 $historyProduct->user_id = Auth::id();
                 $historyProduct->product_id = $product->id;
                 $historyProduct->qty = 0;
                 $historyProduct->qtyChange = $item->qty;
-                $historyProduct->tipe = "ยกเลิกบิล";
+                $historyProduct->tipe = 'ยกเลิกบิล';
                 $historyProduct->save();
             }
             // Delete the item

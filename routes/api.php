@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Api\V1\CatalogController;
+use App\Http\Controllers\Api\V1\SaleLookupController;
+use App\Http\Controllers\Api\V1\SyncController;
 use App\Http\Controllers\Api\V1\TerminalController;
 use Illuminate\Support\Facades\Route;
 
@@ -14,5 +16,7 @@ Route::prefix('v1/terminal')->group(function () {
         Route::post('pin-login', [TerminalController::class, 'pinLogin']);
         Route::get('catalog', [CatalogController::class, 'index']);
         Route::get('barcode/{code}', [CatalogController::class, 'barcode']);
+        Route::post('sync', [SyncController::class, 'push'])->middleware('throttle:120,1');
+        Route::get('sales/{sale}', [SaleLookupController::class, 'show']);
     });
 });

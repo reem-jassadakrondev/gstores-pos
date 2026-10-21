@@ -16,6 +16,8 @@ use InvalidArgumentException;
 /** A user's membership in an organization: org role plus the staff PIN used on POS terminals. */
 class OrganizationMember extends Pivot
 {
+    public const OFFLINE_PIN_ITERATIONS = 100000;
+
     use Auditable, BelongsToOrganization, HasUlids;
 
     protected $table = 'organization_user';
@@ -26,7 +28,7 @@ class OrganizationMember extends Pivot
 
     protected $fillable = ['organization_id', 'user_id', 'org_role', 'is_active'];
 
-    protected $hidden = ['pin_hash'];
+    protected $hidden = ['pin_hash', 'pin_offline_salt', 'pin_offline_hash'];
 
     protected function casts(): array
     {
@@ -61,7 +63,14 @@ class OrganizationMember extends Pivot
             throw new InvalidArgumentException('PIN ต้องเป็นตัวเลข 4–6 หลัก และห้ามเป็นเลขซ้ำหรือเรียงกัน');
         }
 
-        $this->forceFill(['pin_hash' => Hash::make($pin)])->save();
+        $salt = bin2hex(random_bytes(16));
+        $this->forceFill([
+            'pin_hash' => Hash::make($pin),
+            // POS devices verify PINs offline against this (WebCrypto PBKDF2). A stolen device can brute-force
+            // it, which is why a PIN only unlocks the till, never the back-office.
+            'pin_offline_salt' => $salt,
+            'pin_offline_hash' => hash_pbkdf2('sha256', $pin, $salt, self::OFFLINE_PIN_ITERATIONS, 64),
+        ])->save();
     }
 
     public function checkPin(string $pin): bool

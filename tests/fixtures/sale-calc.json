@@ -1,0 +1,394 @@
+[
+    {
+        "name": "vat_inclusive",
+        "input": {
+            "lines": [
+                {
+                    "unit_price": 100,
+                    "qty": 2
+                },
+                {
+                    "unit_price": 55.5,
+                    "qty": 1
+                }
+            ],
+            "vat_registered": true,
+            "vat_rate": 7,
+            "prices_include_vat": true
+        },
+        "expected": {
+            "lines": [
+                {
+                    "gross": 200,
+                    "discount": 0,
+                    "line_total": 200
+                },
+                {
+                    "gross": 55.5,
+                    "discount": 0,
+                    "line_total": 55.5
+                }
+            ],
+            "subtotal": 255.5,
+            "line_discount_total": 0,
+            "bill_discount": 0,
+            "discount_total": 0,
+            "vatable_amount": 238.79,
+            "exempt_amount": 0,
+            "vat_amount": 16.71,
+            "rounding": 0,
+            "total": 255.5
+        }
+    },
+    {
+        "name": "vat_exclusive",
+        "input": {
+            "lines": [
+                {
+                    "unit_price": 100,
+                    "qty": 1
+                }
+            ],
+            "vat_registered": true,
+            "vat_rate": 7,
+            "prices_include_vat": false
+        },
+        "expected": {
+            "lines": [
+                {
+                    "gross": 100,
+                    "discount": 0,
+                    "line_total": 100
+                }
+            ],
+            "subtotal": 100,
+            "line_discount_total": 0,
+            "bill_discount": 0,
+            "discount_total": 0,
+            "vatable_amount": 100,
+            "exempt_amount": 0,
+            "vat_amount": 7,
+            "rounding": 0,
+            "total": 107
+        }
+    },
+    {
+        "name": "bill_discount_split_with_exempt_line",
+        "input": {
+            "lines": [
+                {
+                    "unit_price": 30,
+                    "qty": 1,
+                    "vat_type": "exempt"
+                },
+                {
+                    "unit_price": 70,
+                    "qty": 1
+                }
+            ],
+            "bill_discount": 10,
+            "vat_registered": true,
+            "vat_rate": 7,
+            "prices_include_vat": true
+        },
+        "expected": {
+            "lines": [
+                {
+                    "gross": 30,
+                    "discount": 0,
+                    "line_total": 30
+                },
+                {
+                    "gross": 70,
+                    "discount": 0,
+                    "line_total": 70
+                }
+            ],
+            "subtotal": 100,
+            "line_discount_total": 0,
+            "bill_discount": 10,
+            "discount_total": 10,
+            "vatable_amount": 58.88,
+            "exempt_amount": 27,
+            "vat_amount": 4.12,
+            "rounding": 0,
+            "total": 90
+        }
+    },
+    {
+        "name": "uneven_bill_discount",
+        "input": {
+            "lines": [
+                {
+                    "unit_price": 10,
+                    "qty": 1
+                },
+                {
+                    "unit_price": 10,
+                    "qty": 1
+                },
+                {
+                    "unit_price": 10,
+                    "qty": 1
+                }
+            ],
+            "bill_discount": 0.1,
+            "vat_registered": true,
+            "vat_rate": 7
+        },
+        "expected": {
+            "lines": [
+                {
+                    "gross": 10,
+                    "discount": 0,
+                    "line_total": 10
+                },
+                {
+                    "gross": 10,
+                    "discount": 0,
+                    "line_total": 10
+                },
+                {
+                    "gross": 10,
+                    "discount": 0,
+                    "line_total": 10
+                }
+            ],
+            "subtotal": 30,
+            "line_discount_total": 0,
+            "bill_discount": 0.1,
+            "discount_total": 0.1,
+            "vatable_amount": 27.94,
+            "exempt_amount": 0,
+            "vat_amount": 1.96,
+            "rounding": 0,
+            "total": 29.9
+        }
+    },
+    {
+        "name": "cash_rounding_quarter",
+        "input": {
+            "lines": [
+                {
+                    "unit_price": 10.13,
+                    "qty": 1
+                }
+            ],
+            "rounding_step": 0.25
+        },
+        "expected": {
+            "lines": [
+                {
+                    "gross": 10.13,
+                    "discount": 0,
+                    "line_total": 10.13
+                }
+            ],
+            "subtotal": 10.13,
+            "line_discount_total": 0,
+            "bill_discount": 0,
+            "discount_total": 0,
+            "vatable_amount": 0,
+            "exempt_amount": 10.13,
+            "vat_amount": 0,
+            "rounding": 0.12,
+            "total": 10.25
+        }
+    },
+    {
+        "name": "cash_rounding_baht",
+        "input": {
+            "lines": [
+                {
+                    "unit_price": 10.49,
+                    "qty": 1
+                }
+            ],
+            "rounding_step": 1
+        },
+        "expected": {
+            "lines": [
+                {
+                    "gross": 10.49,
+                    "discount": 0,
+                    "line_total": 10.49
+                }
+            ],
+            "subtotal": 10.49,
+            "line_discount_total": 0,
+            "bill_discount": 0,
+            "discount_total": 0,
+            "vatable_amount": 0,
+            "exempt_amount": 10.49,
+            "vat_amount": 0,
+            "rounding": -0.49,
+            "total": 10
+        }
+    },
+    {
+        "name": "weighed_item",
+        "input": {
+            "lines": [
+                {
+                    "unit_price": 180,
+                    "qty": 1.255
+                }
+            ],
+            "vat_registered": true,
+            "vat_rate": 7
+        },
+        "expected": {
+            "lines": [
+                {
+                    "gross": 225.9,
+                    "discount": 0,
+                    "line_total": 225.9
+                }
+            ],
+            "subtotal": 225.9,
+            "line_discount_total": 0,
+            "bill_discount": 0,
+            "discount_total": 0,
+            "vatable_amount": 211.12,
+            "exempt_amount": 0,
+            "vat_amount": 14.78,
+            "rounding": 0,
+            "total": 225.9
+        }
+    },
+    {
+        "name": "half_satang_line",
+        "input": {
+            "lines": [
+                {
+                    "unit_price": 19.99,
+                    "qty": 1.5
+                }
+            ]
+        },
+        "expected": {
+            "lines": [
+                {
+                    "gross": 29.99,
+                    "discount": 0,
+                    "line_total": 29.99
+                }
+            ],
+            "subtotal": 29.99,
+            "line_discount_total": 0,
+            "bill_discount": 0,
+            "discount_total": 0,
+            "vatable_amount": 0,
+            "exempt_amount": 29.99,
+            "vat_amount": 0,
+            "rounding": 0,
+            "total": 29.99
+        }
+    },
+    {
+        "name": "not_vat_registered",
+        "input": {
+            "lines": [
+                {
+                    "unit_price": 50,
+                    "qty": 3,
+                    "discount": 5
+                }
+            ],
+            "vat_registered": false,
+            "vat_rate": 7
+        },
+        "expected": {
+            "lines": [
+                {
+                    "gross": 150,
+                    "discount": 5,
+                    "line_total": 145
+                }
+            ],
+            "subtotal": 150,
+            "line_discount_total": 5,
+            "bill_discount": 0,
+            "discount_total": 5,
+            "vatable_amount": 0,
+            "exempt_amount": 145,
+            "vat_amount": 0,
+            "rounding": 0,
+            "total": 145
+        }
+    },
+    {
+        "name": "line_discount_capped",
+        "input": {
+            "lines": [
+                {
+                    "unit_price": 20,
+                    "qty": 1,
+                    "discount": 50
+                },
+                {
+                    "unit_price": 5,
+                    "qty": 2
+                }
+            ],
+            "bill_discount": 100
+        },
+        "expected": {
+            "lines": [
+                {
+                    "gross": 20,
+                    "discount": 20,
+                    "line_total": 0
+                },
+                {
+                    "gross": 10,
+                    "discount": 0,
+                    "line_total": 10
+                }
+            ],
+            "subtotal": 30,
+            "line_discount_total": 20,
+            "bill_discount": 10,
+            "discount_total": 30,
+            "vatable_amount": 0,
+            "exempt_amount": 0,
+            "vat_amount": 0,
+            "rounding": 0,
+            "total": 0
+        }
+    },
+    {
+        "name": "string_inputs",
+        "input": {
+            "lines": [
+                {
+                    "unit_price": "12.50",
+                    "qty": "4",
+                    "discount": "0.50"
+                }
+            ],
+            "bill_discount": "1",
+            "vat_registered": true,
+            "vat_rate": "7.00",
+            "prices_include_vat": true
+        },
+        "expected": {
+            "lines": [
+                {
+                    "gross": 50,
+                    "discount": 0.5,
+                    "line_total": 49.5
+                }
+            ],
+            "subtotal": 50,
+            "line_discount_total": 0.5,
+            "bill_discount": 1,
+            "discount_total": 1.5,
+            "vatable_amount": 45.33,
+            "exempt_amount": 0,
+            "vat_amount": 3.17,
+            "rounding": 0,
+            "total": 48.5
+        }
+    }
+]

@@ -1,0 +1,11 @@
+{
+  "name": "ReemoPOS",
+  "short_name": "ReemoPOS",
+  "start_url": "/pos",
+  "scope": "/pos",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#f1f5f9",
+  "theme_color": "#0f172a",
+  "icons": [{ "src": "/favicon.ico", "sizes": "48x48", "type": "image/x-icon" }]
+}
