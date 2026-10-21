@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Legacy;
 
 use Illuminate\Database\Eloquent\Model;
 
@@ -11,6 +11,6 @@ class Transport extends Model
     protected $primaryKey = 'tran_id';
 
     protected $fillable = [
-        'tran_name','tran_status','tran_contact_name','tran_tel',
+        'tran_name', 'tran_status', 'tran_contact_name', 'tran_tel',
     ];
 }

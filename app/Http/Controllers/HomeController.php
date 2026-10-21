@@ -3,11 +3,11 @@
 namespace App\Http\Controllers;
 //© 2020 Copyright: Tahu Coding
 
-use App\Models\Order;
-use App\Models\Overdue;
-use App\Models\Product;
-use App\Models\Transcation;
-use App\Models\Transport;
+use App\Models\Legacy\Order;
+use App\Models\Legacy\Overdue;
+use App\Models\Legacy\Product;
+use App\Models\Legacy\Transcation;
+use App\Models\Legacy\Transport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 

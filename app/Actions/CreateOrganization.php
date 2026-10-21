@@ -33,18 +33,21 @@ class CreateOrganization
         return DB::transaction(function () use ($owner, $data) {
             $tenant = app(CurrentTenant::class);
             $previous = $tenant->organization();
-
-            $organization = Organization::create([
-                'name' => $data['name'],
-                'owner_id' => $owner->getKey(),
-                'plan_id' => Plan::byCode(config('brand.trial_plan'))->getKey(),
-                'status' => OrganizationStatus::Trialing,
-                'trial_ends_at' => now()->addDays(config('brand.trial_days')),
-            ]);
-
-            $tenant->set($organization);
-
             try {
+                // The new organization isn't the tenant yet: clear any current one so the cross-org guard
+                // doesn't block its first rows, then make it the tenant for everything created below.
+                $tenant->clear();
+
+                $organization = Organization::create([
+                    'name' => $data['name'],
+                    'owner_id' => $owner->getKey(),
+                    'plan_id' => Plan::byCode(config('brand.trial_plan'))->getKey(),
+                    'status' => OrganizationStatus::Trialing,
+                    'trial_ends_at' => now()->addDays(config('brand.trial_days')),
+                ]);
+
+                $tenant->set($organization);
+
                 OrganizationMember::create([
                     'organization_id' => $organization->getKey(),
                     'user_id' => $owner->getKey(),

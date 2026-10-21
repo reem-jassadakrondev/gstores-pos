@@ -69,6 +69,17 @@ class AccessManager
         };
     }
 
+    /** Store-wide grant, or a grant at any one branch of the store (enough to *see* store data). */
+    public function canSomewhereIn(User $user, string $permission, Store $store): bool
+    {
+        if ($this->can($user, $permission, $store->organization_id, $store)) {
+            return true;
+        }
+        $ids = $this->branchIdsWith($user, $store->organization_id, $permission);
+
+        return $ids === null || Branch::withoutGlobalScopes()->where('store_id', $store->getKey())->whereIn('id', $ids)->exists();
+    }
+
     /** Every permission the user holds at a branch (what a POS terminal needs after PIN login). */
     public function permissionsAt(User $user, Branch $branch): array
     {
@@ -88,6 +99,24 @@ class AccessManager
             OrgRole::Member => $this->assignmentsFor($user, $orgId, null)->pluck('store_id')->unique()->values()->all(),
             default => null,
         };
+    }
+
+    /** @return list<string>|null branch ids where the user holds $permission; null = every branch */
+    public function branchIdsWith(User $user, Organization|string $organization, string $permission): ?array
+    {
+        $orgId = $organization instanceof Organization ? $organization->getKey() : $organization;
+        $role = $this->orgRole($user, $orgId);
+
+        if ($role === null || $role === OrgRole::Member) {
+            $assignments = $role ? $this->assignmentsFor($user, $orgId, null)->filter(fn (RoleAssignment $a) => $a->role->grants($permission)) : collect();
+            $wholeStores = $assignments->whereNull('branch_id')->pluck('store_id')->unique();
+
+            return $assignments->whereNotNull('branch_id')->pluck('branch_id')
+                ->merge(Branch::withoutGlobalScopes()->whereIn('store_id', $wholeStores)->pluck('id'))
+                ->unique()->values()->all();
+        }
+
+        return $this->can($user, $permission, $orgId) ? null : [];
     }
 
     public function flush(): void

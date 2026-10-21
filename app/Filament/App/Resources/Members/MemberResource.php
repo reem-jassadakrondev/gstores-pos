@@ -8,6 +8,8 @@ use App\Filament\Support\TenantAccess;
 use App\Models\Branch;
 use App\Models\OrganizationMember;
 use App\Models\Role;
+use App\Models\RoleAssignment;
+use App\Policies\OrganizationMemberPolicy;
 use App\Support\Access\Permission;
 use App\Support\Audit\AuditLogger;
 use BackedEnum;
@@ -26,6 +28,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use InvalidArgumentException;
 use UnitEnum;
 
@@ -45,6 +48,25 @@ class MemberResource extends Resource
 
     protected static ?string $slug = 'members';
 
+    public static function managesWholeOrganization(): bool
+    {
+        return TenantAccess::can(Permission::ORG_MEMBERS);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        if (self::managesWholeOrganization()) {
+            return $query;
+        }
+        $stores = OrganizationMemberPolicy::staffStores(TenantAccess::user(), TenantAccess::organization()->getKey());
+
+        // Never themselves: nobody edits their own permissions.
+        return $query->where('org_role', OrgRole::Member)
+            ->where('user_id', '!=', TenantAccess::user()->getKey())
+            ->whereIn('user_id', RoleAssignment::whereIn('store_id', $stores)->select('user_id'));
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
@@ -54,16 +76,21 @@ class MemberResource extends Resource
                 TextInput::make('user_password')->label('รหัสผ่านเริ่มต้น')->password()->revealable()->minLength(8)
                     ->helperText('ใส่เมื่อเป็นผู้ใช้ใหม่ ถ้าอีเมลมีบัญชีอยู่แล้วจะใช้บัญชีเดิม'),
             ]),
-            Section::make('สิทธิ์ระดับกิจการ')->columns(2)->schema([
+            Section::make('สิทธิ์ระดับกิจการ')->columns(2)->visible(fn () => self::managesWholeOrganization())->schema([
                 Select::make('org_role')->label('บทบาท')->options(OrgRole::assignable())
                     ->default(OrgRole::Member->value)->required()->native(false)->live()
                     ->helperText('ผู้ดูแลระบบและนักบัญชีเห็นทุกร้าน · พนักงานเห็นเฉพาะร้านที่กำหนดด้านล่าง'),
                 Toggle::make('is_active')->label('เปิดใช้งาน')->default(true),
             ]),
             Section::make('บทบาทในร้าน / สาขา')
-                ->visible(fn ($get) => $get('org_role') === OrgRole::Member->value || $get('org_role') === OrgRole::Member)
+                ->visible(fn ($get) => ! self::managesWholeOrganization() || in_array($get('org_role'), [OrgRole::Member->value, OrgRole::Member], true))
                 ->schema([
-                    Repeater::make('roleAssignments')->hiddenLabel()->relationship()
+                    Repeater::make('roleAssignments')->hiddenLabel()
+                        // A store manager only sees (and so can only change) assignments in their own stores.
+                        ->relationship(modifyQueryUsing: fn (Builder $query) => self::managesWholeOrganization()
+                            ? $query
+                            : $query->whereIn('store_id', OrganizationMemberPolicy::staffStores(TenantAccess::user(), TenantAccess::organization()->getKey())))
+                        ->minItems(fn () => self::managesWholeOrganization() ? 0 : 1)
                         ->addActionLabel('เพิ่มบทบาท')
                         ->columns(3)
                         ->schema([

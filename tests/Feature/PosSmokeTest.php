@@ -2,11 +2,11 @@
 
 namespace Tests\Feature;
 
-use App\Models\Customer;
-use App\Models\Product;
-use App\Models\ProductTranscation;
-use App\Models\Transcation;
-use App\Models\Transport;
+use App\Models\Legacy\Customer;
+use App\Models\Legacy\Product;
+use App\Models\Legacy\ProductTranscation;
+use App\Models\Legacy\Transcation;
+use App\Models\Legacy\Transport;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;

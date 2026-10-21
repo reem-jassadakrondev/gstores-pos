@@ -42,6 +42,14 @@ final class TenantAccess
         return $ids === null ? $query : $query->whereIn($query->qualifyColumn($column), $ids);
     }
 
+    /** Limits a query on a table with a branch column to branches where the user holds $permission. */
+    public static function scopeToBranchesWith(Builder $query, string $permission, string $column = 'branch_id'): Builder
+    {
+        $ids = app(AccessManager::class)->branchIdsWith(self::user(), self::organization(), $permission);
+
+        return $ids === null ? $query : $query->whereIn($query->qualifyColumn($column), $ids);
+    }
+
     /** @return array<string, string> store id => name, where the user holds $permission store-wide */
     public static function storeOptions(string $permission, ?string $orgPermission = null): array
     {

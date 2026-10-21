@@ -33,7 +33,7 @@ final class DefaultRoles
             'stock_keeper' => [
                 'name' => 'พนักงานสต็อก',
                 'permissions' => [
-                    P::CATALOG_VIEW, P::STOCK_VIEW, P::STOCK_RECEIVE, P::STOCK_ADJUST, P::STOCK_TRANSFER,
+                    P::CATALOG_VIEW, P::STOCK_VIEW, P::STOCK_RECEIVE, P::STOCK_ADJUST, P::STOCK_TRANSFER, P::PURCHASING,
                 ],
             ],
         ];

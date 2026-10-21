@@ -48,7 +48,10 @@ class ManageMembers extends ManageRecords
 
                     return TenantAccess::createWithinPlan(fn () => OrganizationMember::create([
                         'user_id' => $user->getKey(),
-                        'org_role' => OrgRole::from($data['org_role'] instanceof OrgRole ? $data['org_role']->value : $data['org_role']),
+                        // Store managers can only add plain members.
+                        'org_role' => MemberResource::managesWholeOrganization()
+                            ? OrgRole::from($data['org_role'] instanceof OrgRole ? $data['org_role']->value : $data['org_role'])
+                            : OrgRole::Member,
                         'is_active' => $data['is_active'] ?? true,
                     ]), $action);
                 }),

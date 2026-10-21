@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 //© 2020 Copyright: Tahu Coding
 use Illuminate\Support\Facades\File;
-use App\Models\Product;
-use App\Models\HistoryProduct;
+use App\Models\Legacy\Product;
+use App\Models\Legacy\HistoryProduct;
 use Illuminate\Http\Request;
 
 use Illuminate\Support\Facades\DB;

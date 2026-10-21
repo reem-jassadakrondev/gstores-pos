@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Customer;
+use App\Models\Legacy\Customer;
 use Illuminate\Support\Facades\DB;
 
 class CustomerController extends Controller

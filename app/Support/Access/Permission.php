@@ -42,6 +42,9 @@ final class Permission
 
     public const STOCK_TRANSFER = 'stock.transfer';
 
+    // จัดซื้อ
+    public const PURCHASING = 'purchasing.manage';
+
     // ลูกค้า
     public const CUSTOMERS_VIEW = 'customers.view';
 
@@ -102,6 +105,9 @@ final class Permission
                 self::STOCK_RECEIVE => 'รับสินค้าเข้า',
                 self::STOCK_ADJUST => 'ปรับสต็อก / ตรวจนับ',
                 self::STOCK_TRANSFER => 'โอนสต็อก',
+            ],
+            'การจัดซื้อ' => [
+                self::PURCHASING => 'ผู้ขายและใบสั่งซื้อ',
             ],
             'ลูกค้า' => [
                 self::CUSTOMERS_VIEW => 'ดูลูกค้า',

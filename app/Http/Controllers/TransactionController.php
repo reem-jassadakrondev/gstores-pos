@@ -4,14 +4,14 @@ namespace App\Http\Controllers;
 //© 2020 Copyright: Tahu Coding
 
 use Illuminate\Support\Facades\Auth;
-use App\Models\Product;
-use App\Models\Customer;
-use App\Models\Transport;
-use App\Models\Transcation;
-use App\Models\HistoryProduct;
-use App\Models\Overdue;
+use App\Models\Legacy\Product;
+use App\Models\Legacy\Customer;
+use App\Models\Legacy\Transport;
+use App\Models\Legacy\Transcation;
+use App\Models\Legacy\HistoryProduct;
+use App\Models\Legacy\Overdue;
 //sorry kalau ada typo dalam penamaan dalam bahasa inggris
-use App\Models\ProductTranscation;
+use App\Models\Legacy\ProductTranscation;
 use App\Facades\Cart;
 use App\Services\Cart\CartCondition;
 use Illuminate\Http\Request;

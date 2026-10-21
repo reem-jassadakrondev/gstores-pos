@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\CatalogController;
 use App\Http\Controllers\Api\V1\TerminalController;
 use Illuminate\Support\Facades\Route;
 
@@ -11,5 +12,7 @@ Route::prefix('v1/terminal')->group(function () {
         Route::get('me', [TerminalController::class, 'me']);
         Route::get('staff', [TerminalController::class, 'staff']);
         Route::post('pin-login', [TerminalController::class, 'pinLogin']);
+        Route::get('catalog', [CatalogController::class, 'index']);
+        Route::get('barcode/{code}', [CatalogController::class, 'barcode']);
     });
 });

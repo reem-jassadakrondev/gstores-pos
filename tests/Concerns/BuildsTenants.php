@@ -3,11 +3,13 @@
 namespace Tests\Concerns;
 
 use App\Actions\CreateOrganization;
+use App\Actions\CreateProduct;
 use App\Enums\OrgRole;
 use App\Models\Branch;
 use App\Models\Organization;
 use App\Models\OrganizationMember;
 use App\Models\Plan;
+use App\Models\ProductVariant;
 use App\Models\Role;
 use App\Models\RoleAssignment;
 use App\Models\Store;
@@ -98,6 +100,15 @@ trait BuildsTenants
         app(AccessManager::class)->flush();
 
         return $assignment;
+    }
+
+    /** A product with one variant in $store, created as the store's tenant. */
+    protected function makeProduct(Store $store, string $sku = 'W600', float $price = 10, array $attributes = []): ProductVariant
+    {
+        return $this->inTenant($store->organization, fn () => app(CreateProduct::class)->handle(
+            ['store_id' => $store->getKey(), 'name' => "สินค้า {$sku}", ...$attributes],
+            ['sku' => $sku, 'price' => $price],
+        )->variants()->first());
     }
 
     /** Signs in and selects the tenant inside the app panel, for Livewire page tests. */
